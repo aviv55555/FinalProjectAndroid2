@@ -44,4 +44,10 @@ You can check with:
 node -v
 npm -v
 ```
+## 🎥 Demo Video
+
+Check out a short demo of TravelConnect on YouTube:
+
+[![Watch the demo](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID/0.jpg)]([https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID](https://youtu.be/lebNZ9GTLn0))
+
 Enjoy! 🌍✨

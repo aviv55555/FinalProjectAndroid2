@@ -35,7 +35,8 @@ For the server:
 ```bash
 npm install
 ```
-###✅ Requirements
+
+### ✅ Requirements
 Node.js and npm installed on your machine
 You can check with:
 

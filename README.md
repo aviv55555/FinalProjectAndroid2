@@ -46,8 +46,6 @@ npm -v
 ```
 ## 🎥 Demo Video
 
-Check out a short demo of TravelConnect on YouTube:
-
-[![Watch the demo](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID/0.jpg)](https://youtu.be/lebNZ9GTLn0)
+[![Watch the demo](https://img.youtube.com/vi/lebNZ9GTLn0/0.jpg)](https://www.youtube.com/watch?v=lebNZ9GTLn0)
 
 Enjoy! 🌍✨

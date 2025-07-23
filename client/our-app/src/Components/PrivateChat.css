@@ -1,0 +1,72 @@
+/* מיכל ראשי */
+.private-chat-container {
+  max-width: 600px;
+  margin: auto;
+  padding: 1rem;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  border-radius: 8px;
+}
+
+/* כותרת */
+.private-chat-title {
+  margin-bottom: 1rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* מיכל ההודעות */
+.chat-messages {
+  height: 350px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background-color: #fafafa;
+  margin-bottom: 1rem;
+}
+
+/* בועת הודעה */
+.chat-bubble {
+  max-width: 75%;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  margin-bottom: 6px;
+  word-wrap: break-word;
+}
+
+.chat-bubble.self {
+  background-color: #e0f3ff;
+  align-self: flex-end;
+  color: #000;
+}
+
+.chat-bubble.other {
+  background-color: #f1f1f1;
+  color: #000;
+}
+
+/* טיימסטמפ */
+.chat-timestamp {
+  font-size: 0.7em;
+  color: #888;
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* שדה כתיבה */
+.chat-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input-group input {
+  flex: 1;
+}
+
+.chat-image {
+  max-width: 180px;
+  display: block;
+  margin-top: 4px;
+  border-radius: 6px;
+}

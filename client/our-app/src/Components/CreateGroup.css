@@ -1,0 +1,39 @@
+.create-group-container {
+  margin-top: 3rem;
+  max-width: 500px;
+}
+
+.create-group-card {
+  padding: 2rem;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.create-group-title {
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+  color: #333;
+}
+
+.create-group-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+  color: #495057;
+}
+
+.create-group-input,
+.create-group-textarea {
+  margin-bottom: 1.5rem;
+}
+
+.create-group-button {
+  width: 100%;
+  font-weight: 500;
+}
+
+.create-group-alert {
+  margin-bottom: 1rem;
+}

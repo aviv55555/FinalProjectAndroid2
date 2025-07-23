@@ -1,0 +1,33 @@
+.feed-container {
+  margin-top: 2rem;
+  padding-bottom: 3rem;
+}
+
+.feed-posts-wrapper {
+  margin-top: 2rem;
+  margin-bottom: 3rem;
+}
+
+.feed-no-posts {
+  font-style: italic;
+  color: #666;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.feed-post {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background-color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.feed-post:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transition: 0.2s ease;
+}
+
+.feed-search-wrapper {
+  margin-top: 2rem;
+}

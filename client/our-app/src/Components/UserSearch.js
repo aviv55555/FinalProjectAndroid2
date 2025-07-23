@@ -3,6 +3,13 @@ import { useEffect, useState } from "react";
 import { ref, get } from "firebase/database";
 import { database } from "./FireBase";
 import 'bootstrap/dist/css/bootstrap.min.css';
+/**
+ * This component allows users to search and view a list of users fetched from Firebase Realtime Database.
+ * It retrieves the users once when the component loads, stores them in local state,
+ * and filters the list in real-time as the user types in the search box.
+ * The filtered users are displayed using Bootstrap styling with names, emails, and a link to their profile.
+ * If no users match the search query, a "Users Not Found" message is shown.
+ */
 
 const UserSearch = () => {
   const [users, setUsers] = useState([]);
@@ -52,11 +59,11 @@ const UserSearch = () => {
                 <br />
                 <small>{user.email}</small>
               </div>
-              <a href={`/profile/${user.uid}`} className="btn btn-sm btn-outline-primary">צפה בפרופיל</a>
+              <a href={`/profile/${user.uid}`} className="btn btn-sm btn-outline-primary">View Profile</a>
             </li>
           ))
         ) : (
-          <li className="list-group-item text-center">לא נמצאו משתמשים</li>
+          <li className="list-group-item text-center">Users Not Found</li>
         )}
       </ul>
     </div>

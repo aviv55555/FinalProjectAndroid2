@@ -7,8 +7,16 @@ import {
   GoogleAuthProvider,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
-  deleteUser,
+  deleteUser,updatePassword
 } from "firebase/auth";
+import './EditProfile.css';
+/**
+ * EditProfile component allows users to view and update their personal details,
+ * including name, date of birth, gender, profile picture, and password.
+ * It fetches the current data from Firebase Realtime Database, provides image preview and upload,
+ * handles password change with secure re-authentication,
+ * and also supports profile deletion with confirmation and re-authentication.
+ */
 
 const EditProfile = () => {
   const [userData, setUserData] = useState({
@@ -22,6 +30,9 @@ const EditProfile = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+const [newPassword, setNewPassword] = useState("");
+
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const userId = auth.currentUser?.uid;
@@ -79,24 +90,41 @@ const EditProfile = () => {
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      const imageURL = await handleImageUpload();
-      await update(ref(database, `users/${userId}`), {
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        dob: userData.dob,
-        gender: userData.gender,
-        image: imageURL,
-      });
-      alert("Profile updated successfully!");
-      navigate(`/profile/${userId}`);
-    } catch (error) {
-      alert("Failed to update profile: " + error.message);
-    } finally {
-      setSaving(false);
+  setSaving(true);
+  try {
+    const imageURL = await handleImageUpload();
+
+    if (newPassword) {
+      const user = auth.currentUser;
+      if (!user) throw new Error("No authenticated user");
+
+      if (!currentPassword) {
+        throw new Error("Current password is required to change password.");
+      }
+
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPassword);
     }
-  };
+
+    await update(ref(database, `users/${userId}`), {
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      dob: userData.dob,
+      gender: userData.gender,
+      image: imageURL,
+    });
+
+    alert("Profile updated successfully!");
+    setCurrentPassword("");
+    setNewPassword("");
+    navigate(`/profile/${userId}`);
+  } catch (error) {
+    alert("Failed to update profile: " + error.message);
+  } finally {
+    setSaving(false);
+  }
+};
 
   const handleDeleteProfile = async () => {
     if (!window.confirm("Are you sure you want to DELETE your profile?")) {
@@ -107,11 +135,9 @@ const EditProfile = () => {
       const user = auth.currentUser;
       if (!user) throw new Error("No authenticated user");
 
-      // בודקים את ספק ההתחברות (provider)
       const providerId = user.providerData[0]?.providerId;
 
       if (providerId === "password") {
-        // אימות מחודש עם סיסמה
 
         const password = window.prompt(
           "Please enter your password to confirm deletion:"
@@ -125,7 +151,6 @@ const EditProfile = () => {
         await reauthenticateWithCredential(user, credential);
 
       } else if (providerId === "google.com") {
-        // אימות מחודש עם Google Popup
 
         const provider = new GoogleAuthProvider();
         await reauthenticateWithPopup(user, provider);
@@ -134,11 +159,8 @@ const EditProfile = () => {
         alert("Re-authentication method not supported for this provider.");
         return;
       }
-
-      // מחיקת הנתונים מה־Realtime Database
       await remove(ref(database, `users/${user.uid}`));
 
-      // מחיקת המשתמש מ־Firebase Auth
       await deleteUser(user);
 
       alert("Profile deleted successfully.");
@@ -152,57 +174,31 @@ const EditProfile = () => {
   if (loading) return <p>Loading profile...</p>;
 
   return (
-    <div className="container mt-4" style={{ maxWidth: 500 }}>
-      <h3 className="text-center mb-4">EDIT PROFILE</h3>
+    <div className="container edit-profile-container">
+  <h3 className="edit-profile-title">EDIT PROFILE</h3>
 
-      <div className="d-flex flex-column align-items-center mb-3">
-        <div
-          onClick={() => fileInputRef.current.click()}
-          style={{
-            cursor: "pointer",
-            width: 140,
-            height: 140,
-            borderRadius: "50%",
-            border: "2px solid #007bff",
-            overflow: "hidden",
-            objectFit: "cover",
-          }}
-        >
-          {preview ? (
-            <img
-              src={preview}
-              alt="Profile Preview"
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-                backgroundColor: "#f0f0f0",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                color: "#888",
-                fontSize: 14,
-              }}
-            >
-              Add Profile Picture
-            </div>
-          )}
-        </div>
-        <div
-          style={{
-            marginTop: 8,
-            fontWeight: "bold",
-            color: "#007bff",
-            cursor: "pointer",
-          }}
-          onClick={() => fileInputRef.current.click()}
-        >
-          CHANGE PROFILE PHOTO
-        </div>
-      </div>
+  <div className="d-flex flex-column align-items-center mb-3">
+    <div
+      className="profile-image-wrapper"
+      onClick={() => fileInputRef.current.click()}
+    >
+      {preview ? (
+        <img
+          src={preview}
+          alt="Profile Preview"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      ) : (
+        <div className="profile-image-placeholder">Add Profile Picture</div>
+      )}
+    </div>
+    <div
+      className="change-photo-link"
+      onClick={() => fileInputRef.current.click()}
+    >
+      CHANGE PROFILE PHOTO
+    </div>
+  </div>
 
       <input
         type="file"
@@ -231,6 +227,21 @@ const EditProfile = () => {
         required
       />
       <input
+  type="password"
+  className="form-control mb-3"
+  placeholder="Current Password (required if changing password)"
+  value={currentPassword}
+  onChange={(e) => setCurrentPassword(e.target.value)}
+/>
+<input
+  type="password"
+  className="form-control mb-3"
+  placeholder="New Password"
+  value={newPassword}
+  onChange={(e) => setNewPassword(e.target.value)}
+/>
+
+      <input
         type="date"
         name="dob"
         className="form-control mb-3"
@@ -252,20 +263,19 @@ const EditProfile = () => {
       </select>
 
       <button
-        className="btn btn-primary w-100 mb-3"
-        onClick={handleSave}
-        disabled={saving}
-      >
-        {saving ? "Saving..." : "Save"}
-      </button>
+    className="btn btn-primary edit-profile-button"
+    onClick={handleSave}
+    disabled={saving}
+  >
+    {saving ? "Saving..." : "Save"}
+  </button>
 
-      <button
-        className="btn btn-danger w-100"
-        onClick={handleDeleteProfile}
-        style={{ marginTop: 10 }}
-      >
-        DELETE PROFILE
-      </button>
+  <button
+    className="btn btn-danger delete-profile-button"
+    onClick={handleDeleteProfile}
+  >
+    DELETE PROFILE
+  </button>
     </div>
   );
 };

@@ -1,11 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ref, get, update } from "firebase/database";
-import { database, auth } from "./FireBase"; // ודא ש-auth מיוצא מ-FireBase.js
-import { useParams } from "react-router-dom";
+import { database, auth } from "./FireBase"; 
+import { useParams, useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useNavigate } from "react-router-dom";
+import './Profile.css';
+/*
+  Profile component displaying user details: personal info, followers, groups, and planned trips.
+  Fetches data from Firebase and an Express server, supports follow/unfollow, navigation to chat and profile editing.
+*/
 
 const Profile = () => {
   const { userId } = useParams();
@@ -16,9 +20,10 @@ const Profile = () => {
   const [followingList, setFollowingList] = useState([]);
   const [groupsMember, setGroupsMember] = useState([]);
   const [groupsAdmin, setGroupsAdmin] = useState([]);
+  const [trips, setTrips] = useState([]); 
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  // קבלת משתמש מחובר
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) setCurrentUserId(user.uid);
@@ -27,7 +32,37 @@ const Profile = () => {
     return () => unsubscribe();
   }, []);
 
-  // טען פרטי משתמש, עוקבים, נעקבים, קבוצות חבר וקבוצות מנהל
+  const getGroupsForUser = async (userId) => {
+    const groupMembersRef = ref(database, "groupMembers");
+    const snapshot = await get(groupMembersRef);
+    if (!snapshot.exists()) return [];
+
+    const allGroups = snapshot.val();
+    const userGroups = [];
+
+    for (const [groupId, users] of Object.entries(allGroups)) {
+      if (users && userId in users) {
+        const groupSnap = await get(ref(database, `groups/${groupId}`));
+        const groupData = groupSnap.exists() ? groupSnap.val() : { name: "Unknown Group" };
+        userGroups.push({ id: groupId, name: groupData.name || "Unnamed Group" });
+      }
+    }
+
+    return userGroups;
+  };
+
+  const fetchTrips = async (userId) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/trips?userId=${userId}`);
+      if (!res.ok) throw new Error('Failed to fetch trips');
+      const data = await res.json();
+      setTrips(data.trips || []);
+    } catch (err) {
+      console.error("Error fetching trips:", err);
+      setTrips([]);
+    }
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (!userId) return;
@@ -39,28 +74,26 @@ const Profile = () => {
           const data = snapshot.val();
           setUserData(data);
 
-          // עוקבים ונעקבים (המרה ממפת מפתחות לרשימה)
           setFollowersList(data.followers ? Object.keys(data.followers) : []);
           setFollowingList(data.following ? Object.keys(data.following) : []);
           setIsFollowing(data.followers && currentUserId && currentUserId in data.followers);
 
-          // טען קבוצות חבר בהן
-          const memberSnap = await get(ref(database, `groupsMember/${userId}`));
-          setGroupsMember(memberSnap.exists() ? Object.values(memberSnap.val()) : []);
+          const groups = await getGroupsForUser(userId);
+          setGroupsMember(groups);
 
-          // טען קבוצות מנהל
           const adminSnap = await get(ref(database, `groupsAdmin/${userId}`));
-if (adminSnap.exists()) {
-  const groupsObj = adminSnap.val();
-  const groupsArray = Object.entries(groupsObj).map(([id, data]) => ({
-    id,
-    name: typeof data === "string" ? data : data.name || "Unnamed Group",
-  }));
-  setGroupsAdmin(groupsArray);
-} else {
-  setGroupsAdmin([]);
-}
+          if (adminSnap.exists()) {
+            const groupsObj = adminSnap.val();
+            const groupsArray = Object.entries(groupsObj).map(([id, data]) => ({
+              id,
+              name: typeof data === "string" ? data : data.name || "Unnamed Group",
+            }));
+            setGroupsAdmin(groupsArray);
+          } else {
+            setGroupsAdmin([]);
+          }
 
+          await fetchTrips(userId);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -71,17 +104,14 @@ if (adminSnap.exists()) {
     fetchUserData();
   }, [userId, currentUserId]);
 
-  // טיפול בלחיצה על כפתור Follow/Unfollow
   const handleFollowToggle = async () => {
     if (!currentUserId || currentUserId === userId) return;
 
     const updates = {};
     if (isFollowing) {
-      // להסיר עוקב
       updates[`users/${userId}/followers/${currentUserId}`] = null;
       updates[`users/${currentUserId}/following/${userId}`] = null;
     } else {
-      // להוסיף עוקב
       updates[`users/${userId}/followers/${currentUserId}`] = true;
       updates[`users/${currentUserId}/following/${userId}`] = true;
     }
@@ -98,7 +128,6 @@ if (adminSnap.exists()) {
     }
   };
 
-  // פורמט תאריך Member since בפורמט מילולי באנגלית
   const formatDate = (isoString) => {
     if (!isoString) return "";
     const date = new Date(isoString);
@@ -109,123 +138,179 @@ if (adminSnap.exists()) {
     });
   };
 
+  const formatTripDate = (dateStr) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-IL", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  };
+
   if (loading) return <p>Loading...</p>;
   if (!userData) return <p>User not found.</p>;
 
   const isOwnProfile = currentUserId === userId;
 
+const handleDeleteTrip = async (tripId) => {
+  if (!window.confirm("Are you sure you want to delete this trip?")) return;
+
+  try {
+    const response = await fetch(`http://localhost:3000/api/trips/${tripId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete trip");
+    }
+
+    setTrips((prevTrips) => prevTrips.filter((trip) => trip._id !== tripId));
+    alert("Trip deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting trip:", error);
+    alert("Error deleting trip: " + error.message);
+  }
+};
   return (
-    <div className="container mt-4" style={{ maxWidth: 720 }}>
-      <div className="card shadow-sm p-4">
+    <div className="container mt-4 profile-container">
+      <div className="card shadow-sm p-4 profile-card">
         <div className="text-center">
           {userData.image ? (
-            <img
-              src={userData.image}
-              alt="Profile"
-              className="rounded-circle mb-3"
-              style={{ width: 150, height: 150, objectFit: "cover" }}
-            />
+            <img src={userData.image} alt="Profile" className="profile-image" />
           ) : (
-            <div
-              className="rounded-circle mb-3"
-              style={{ width: 150, height: 150, backgroundColor: "#f0f0f0" }}
-            />
+            <div className="profile-image-placeholder" />
           )}
 
-          <h2 className="mb-1">{userData.firstName} {userData.lastName}</h2>
-          <p className="text-muted mb-2">{userData.email}</p>
+          <h2 className="profile-name">{userData.firstName} {userData.lastName}</h2>
+          <p className="profile-email">{userData.email}</p>
 
-          {/* Followers & Following side by side - Instagram style */}
-          <div className="d-flex justify-content-center gap-5 mb-3" style={{ fontWeight: 600, fontSize: 16 }}>
+          <div className="d-flex justify-content-center profile-follow-info mb-3">
             <div className="text-center">
               <div>{followersList.length}</div>
-              <div className="text-muted" style={{ fontWeight: 400, fontSize: 14 }}>Followers</div>
+              <div className="profile-follow-subtext">Followers</div>
             </div>
             <div className="text-center">
               <div>{followingList.length}</div>
-              <div className="text-muted" style={{ fontWeight: 400, fontSize: 14 }}>Following</div>
+              <div className="profile-follow-subtext">Following</div>
             </div>
           </div>
 
-          {/* Member since */}
-          <p className="text-muted mb-3" style={{ fontSize: 14 }}>
+          <p className="profile-date">
             Member since: <strong>{formatDate(userData.createdAt)}</strong>
           </p>
-
-          {/* Follow / Unfollow button */}
           {!isOwnProfile && currentUserId && (
-            <button
-              className={`btn ${isFollowing ? "btn-outline-danger" : "btn-primary"} px-4`}
-              style={{ borderRadius: 25, fontWeight: 600 }}
-              onClick={handleFollowToggle}
-            >
-              {isFollowing ? "Unfollow" : "Follow"}
-            </button>
+            <div className="profile-buttons d-flex flex-column align-items-center gap-2">
+              <button
+                className={`btn ${isFollowing ? "btn-outline-danger" : "btn-primary"} px-4`}
+                style={{ borderRadius: 25, fontWeight: 600 }}
+                onClick={handleFollowToggle}
+              >
+                {isFollowing ? "Unfollow" : "Follow"}
+              </button>
+
+              <button
+                className="btn btn-outline-secondary px-4"
+                style={{ borderRadius: 25, fontWeight: 600 }}
+                onClick={() => navigate(`/chat/${userId}`)}
+              >
+                Message
+              </button>
+            </div>
           )}
         </div>
 
         {isOwnProfile && (
-        <button
-          className="btn btn-warning px-4 mb-3"
-          style={{ borderRadius: 25, fontWeight: 600 }}
-          onClick={() => {
-          navigate(`/edit-profile/${userId}`);
-          // כאן אפשר להוסיף לוגיקה לעריכה או ניווט לעמוד עריכה
-        }}
-        >
-          Edit Profile
-        </button>
+          <button className="btn btn-warning profile-edit-btn" onClick={() => navigate(`/edit-profile/${userId}`)}>
+            Edit Profile
+          </button>
         )}
 
-        {/* Groups Member Of */}
-        <div className="mt-4">
+        <div className="profile-groups-section">
           <h5>Groups Member Of</h5>
           {groupsMember.length === 0 ? (
             <p className="text-muted">No groups joined.</p>
           ) : (
             <ul className="list-group list-group-flush">
-              {groupsMember.map((group, idx) => (
-                <li key={idx} className="list-group-item px-0">{group}</li>
+              {groupsMember.map((group) => (
+                <li key={group.id} className="list-group-item px-0">
+                  <a href={`/group/${group.id}`} className="text-decoration-none text-primary fw-bold">
+                    {group.name}
+                  </a>
+                </li>
               ))}
             </ul>
           )}
         </div>
+        <div className="profile-groups-section">
+          <h5>Groups Admin Of</h5>
 
-        {/* Groups Admin Of */}
-<div className="mt-4">
-  <h5>Groups Admin Of</h5>
+          {isOwnProfile && (
+            <div className="mb-3">
+              <button
+                className="btn btn-success"
+                onClick={() => navigate(`/create-group/${userId}`)}
+              >
+                + Create New Group
+              </button>
+            </div>
+          )}
 
-  {/* כפתור יצירת קבוצה חדשה */}
-  {isOwnProfile && (
-    <div className="mb-3">
-      <button
-        className="btn btn-success"
-        onClick={() => navigate(`/create-group/${userId}`)}
-      >
-        + Create New Group
-      </button>
-    </div>
-  )}
+          {groupsAdmin.length === 0 ? (
+            <p className="text-muted">No groups managed.</p>
+          ) : (
+            <ul className="list-group list-group-flush">
+              {groupsAdmin.map((group) => (
+                <li key={group.id} className="list-group-item px-0">
+                  <a href={`/group/${group.id}`} className="text-decoration-none text-primary fw-bold">
+                    {group.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="profile-trips-section mt-4">
+         <div className="profile-trips-section mt-4">
+  <h5>My Planned Trips</h5>
+  {trips.length === 0 ? (
+  <p className="text-muted">No trips planned yet.</p>
+) : (
+  trips.map((trip) => (
+    <div key={trip._id} className="card mb-3">
+      <div className="card-body">
+        <p>
+          <strong>Trip dates:</strong> {formatTripDate(trip.startDate)} - {formatTripDate(trip.endDate)}
+        </p>
+        <p><strong>Countries and Cities to visit:</strong></p>
+        <ul>
+          {trip.points.map((point, idx) => (
+            <li key={idx}>
+              {point.country}
+              {point.city ? ` - ${point.city}` : ""}
+            </li>
+          ))}
+        </ul>
+        {isOwnProfile && (
+          <button
+            className="btn btn-sm btn-danger"
+            onClick={() => handleDeleteTrip(trip._id)}
+          >
+            Delete
+          </button>
+        )}
+      </div>
+    </div>
+  ))
+)}
 
-  {groupsAdmin.length === 0 ? (
-    <p className="text-muted">No groups managed.</p>
-  ) : (
-    <ul className="list-group list-group-flush">
-  {groupsAdmin.map((group, idx) => (
-    <li key={idx} className="list-group-item px-0">
-      <a href={`/group/${group.id}`} className="text-decoration-none text-primary fw-bold">
-        {group.name}
-      </a>
-    </li>
-  ))}
-</ul>
-
-  )}
 </div>
 
+        </div>
       </div>
     </div>
   );
 };
 
-export default Profile; 
+export default Profile;

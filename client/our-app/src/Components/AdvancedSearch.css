@@ -1,0 +1,29 @@
+.advanced-search-toggle {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+}
+
+.advanced-search-toggle:hover {
+  color: #0d6efd; /* Bootstrap primary */
+}
+
+.advanced-search-container {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.advanced-search-input {
+  margin-bottom: 1rem;
+}
+
+.advanced-search-dates {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}

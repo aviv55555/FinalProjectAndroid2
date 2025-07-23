@@ -1,4 +1,5 @@
 import React from "react";
+import "./AdvancedSearch.css"; 
 
 export default function AdvancedSearch({
   open,
@@ -14,49 +15,41 @@ export default function AdvancedSearch({
 }) {
   if (!open) {
     return (
-      <h5
-        className="mb-3 fw-semibold"
-        style={{ cursor: "pointer", userSelect: "none" }}
-        onClick={onToggle}
-      >
+      <h5 className="advanced-search-toggle" onClick={onToggle}>
         Advanced Search ▼
       </h5>
     );
   }
 
   return (
-    <div className="mb-4 p-3 shadow rounded bg-white">
-      <h5
-        className="mb-3 fw-semibold"
-        style={{ cursor: "pointer", userSelect: "none" }}
-        onClick={onToggle}
-      >
+    <div className="advanced-search-container">
+      <h5 className="advanced-search-toggle" onClick={onToggle}>
         Advanced Search ▲
       </h5>
 
       <input
         type="text"
-        className="form-control mb-3"
+        className="form-control advanced-search-input"
         placeholder="Search by user name (first or last)"
         value={searchByUserName}
         onChange={(e) => setSearchByUserName(e.target.value)}
       />
-      <div className="d-flex gap-2 mb-3">
+
+      <div className="advanced-search-dates">
         <input
           type="date"
           className="form-control"
-          placeholder="Date from"
           value={searchDateFrom}
           onChange={(e) => setSearchDateFrom(e.target.value)}
         />
         <input
           type="date"
           className="form-control"
-          placeholder="Date to"
           value={searchDateTo}
           onChange={(e) => setSearchDateTo(e.target.value)}
         />
       </div>
+
       <input
         type="text"
         className="form-control"
@@ -64,6 +57,6 @@ export default function AdvancedSearch({
         value={searchByPostText}
         onChange={(e) => setSearchByPostText(e.target.value)}
       />
-    </div>
-  );
+    </div>
+  );
 }

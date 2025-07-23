@@ -1,0 +1,93 @@
+/* קונטיינר כללי */
+.profile-container {
+  max-width: 720px;
+  margin: 2rem auto;
+}
+
+.profile-card {
+  padding: 2rem;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  background-color: #ffffff;
+}
+
+/* תמונת פרופיל */
+.profile-image {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.profile-image-placeholder {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  margin-bottom: 1rem;
+}
+
+/* כותרות וטקסט */
+.profile-name {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.profile-email {
+  color: #6c757d;
+  margin-bottom: 1rem;
+}
+
+.profile-follow-info {
+  font-weight: 600;
+  font-size: 16px;
+  gap: 3rem;
+}
+
+.profile-follow-subtext {
+  font-size: 14px;
+  font-weight: 400;
+  color: #6c757d;
+}
+
+.profile-date {
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 1rem;
+}
+
+/* כפתורים */
+.profile-buttons .btn {
+  border-radius: 25px;
+  font-weight: 600;
+  padding: 0.5rem 1.5rem;
+}
+
+.profile-edit-btn {
+  margin-bottom: 1.5rem;
+}
+
+/* קבוצות */
+.profile-groups-section {
+  margin-top: 2rem;
+}
+
+.profile-groups-section h5 {
+  margin-bottom: 0.75rem;
+}
+
+.profile-groups-section ul {
+  padding-left: 0;
+}
+
+.profile-groups-section .list-group-item {
+  padding-left: 0;
+  border: none;
+}
+
+.profile-groups-section a {
+  text-decoration: none;
+  font-weight: bold;
+  color: #0d6efd;
+}

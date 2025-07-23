@@ -1,0 +1,5 @@
+NODEJSB/node_modules
+NODEJSB/.env
+NODEJSB/.DS_Store
+NODEJSB/npm-debug.log
+NODEJSB/yarn-error.log
